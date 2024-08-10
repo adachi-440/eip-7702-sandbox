@@ -10,9 +10,15 @@
     "@openzeppelin/contracts": "^5.0.1"
   },
   "devDependencies": {
+    "@tanstack/react-query": "^5.51.23",
+    "@types/bun": "^1.1.6",
+    "@types/node": "^22.2.0",
     "forge-std": "github:foundry-rs/forge-std#v1.8.1",
     "prettier": "^3.0.0",
-    "solhint": "^3.6.2"
+    "solhint": "^3.6.2",
+    "typescript": "^5.5.4",
+    "viem": "^2.19.3",
+    "wagmi": "^2.12.5"
   },
   "keywords": [
     "blockchain",
