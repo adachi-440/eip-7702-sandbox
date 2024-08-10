@@ -193,6 +193,12 @@ simply copy paste the path):
 $ bun run test:coverage:report
 ```
 
+### Run EIP-7702 Script
+
+```sh
+$ bun run script/index.ts
+```
+
 ## Related Efforts
 
 - [abigger87/femplate](https://github.com/abigger87/femplate)
