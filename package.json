@@ -39,6 +39,7 @@
     "prettier:write": "prettier --write \"**/*.{json,md,yml}\" --ignore-path \".prettierignore\"",
     "test": "forge test",
     "test:coverage": "forge coverage",
-    "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage"
+    "test:coverage:report": "forge coverage --report lcov && genhtml lcov.info --branch-coverage --output-dir coverage",
+    "deploy:localhost": "forge script script/Deploy.s.sol --broadcast --fork-url http://localhost:8545 && forge script script/Deploy.s.sol --broadcast --fork-url http://localhost:8546"
   }
 }
