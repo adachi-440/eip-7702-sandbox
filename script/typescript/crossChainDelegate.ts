@@ -2,7 +2,7 @@ import { encodeFunctionData, parseEther } from 'viem'
 import { delegater, anvil1DelegaterWalletClient, anvil1WalletClient, anvil1PublicClient, delegateWalletProvider, account } from './config'
 import { abi, contractAddress, permit2Abi, permit2Address, sampleTokenAbi, sampleTokenAddress } from './contract'
 import { approvePermit2, getBalance, mintToken } from './token'
-import { PERMIT2_ADDRESS, SignatureTransfer } from '@uniswap/permit2-sdk'
+import { AllowanceTransfer, MaxAllowanceTransferAmount, PERMIT2_ADDRESS, PermitSingle, SignatureTransfer } from '@uniswap/permit2-sdk'
 
 function toDeadline(expiration: number): number {
   return Math.floor((Date.now() + expiration) / 1000)
@@ -52,39 +52,33 @@ async function main() {
     args: [delegater.address, sampleTokenAddress, account.address],
   }) as [bigint, bigint, bigint]
 
-  console.log('permit amount:', permitAmount)
-  console.log('expiration:', expiration)
-  console.log('nonce:', nonce)
-
-  const permit = {
-    permitted: {
+  const permitSingle: PermitSingle = {
+    details: {
       token: sampleTokenAddress,
       amount: permitAmount,
+      // You may set your own deadline - we use 30 days.
+      expiration: toDeadline(/* 30 days= */ 1000 * 60 * 60 * 24 * 30),
+      nonce,
     },
-    nonce: 2,
     spender: account.address,
-    deadline: toDeadline(/* 30 minutes= */ 1000 * 60 * 60 * 30),
+    // You may set your own deadline - we use 30 minutes.
+    sigDeadline: toDeadline(/* 30 minutes= */ 1000 * 60 * 60 * 30),
   }
 
-  const transferDetails = {
-    to: account.address,
-    requestedAmount: permitAmount,
-  }
-
-  const { domain, types, values } = SignatureTransfer.getPermitData(permit, PERMIT2_ADDRESS, anvil1PublicClient.chain.id)
+  const { domain, types, values } = AllowanceTransfer.getPermitData(permitSingle, PERMIT2_ADDRESS, anvil1PublicClient.chain.id)
 
   const signature = await delegateWalletProvider._signTypedData(domain, types, values)
 
-  const permitTransfer = {
-    permitted: permit.permitted,
-    nonce: 2,
-    deadline: permit.deadline,
-  }
+  const permitFunctionData = encodeFunctionData({
+    abi: permit2Abi,
+    functionName: 'permit',
+    args: [delegater.address, permitSingle, signature],
+  })
 
   const transferFromFunctionData = encodeFunctionData({
     abi: permit2Abi,
-    functionName: 'permitTransferFrom',
-    args: [permitTransfer, transferDetails, delegater.address, signature],
+    functionName: 'transferFrom',
+    args: [delegater.address, account.address, permitAmount, sampleTokenAddress],
   })
 
   const transferFunctionData = encodeFunctionData({
@@ -103,6 +97,11 @@ async function main() {
         functionName: 'execute',
         args: [
           [
+            {
+              data: permitFunctionData,
+              to: permit2Address,
+              value: parseEther('0'),
+            },
             {
               data: transferFromFunctionData,
               to: permit2Address,
